@@ -35,7 +35,8 @@ export class User {
   @Prop()
   avatar?: string;
 
-  @Prop({ enum: ['male', 'female'], required: true })
+  // @Prop({ enum: ['male', 'female'], required: true })
+  @Prop()
   gender: string;
 
   @Prop()
@@ -44,7 +45,7 @@ export class User {
   @Prop({ unique: true, required: true, lowercase: true })
   email: string;
 
-  @Prop({ required: true })
+  @Prop()
   phoneNum: number;
 
   @Prop({ type: VerificationInfo, default: {} })
