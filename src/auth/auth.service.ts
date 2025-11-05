@@ -1,9 +1,15 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserService } from '../user/user.service';
+import { EmailService } from '../email/email.service';
+import { randomInt } from 'crypto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
 
 @Injectable()
 export class AuthService {
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private emailService: EmailService,
+  ) {}
 
   async register(
     firstName: string,
@@ -12,9 +18,9 @@ export class AuthService {
     password: string,
   ) {
     const existing = await this.userService.findByEmail(email);
-
     if (existing) throw new BadRequestException('Email already registered');
 
+    // 1️⃣ Create the user
     const user = await this.userService.create({
       firstName,
       lastName,
@@ -22,6 +28,42 @@ export class AuthService {
       password,
     });
 
-    return user;
+    // 2️⃣ Generate OTP
+    const otp = this.generateOtp();
+
+    // 3️⃣ Save OTP in verificationInfo
+    user.verificationInfo.token = otp;
+    await user.save();
+
+    // 4️⃣ Send OTP email
+    await this.emailService.sendOtpMail(email, otp);
+
+    return {
+      message: 'User registered successfully. OTP sent to email.',
+      userId: user._id,
+    };
+  }
+
+  private generateOtp(): string {
+    // 6-digit OTP
+    return randomInt(100000, 999999).toString();
+  }
+
+  async verifyOtp({ email, token }: VerifyOtpDto) {
+    const user = await this.userService.findByEmail(email);
+
+    if (!user) throw new BadRequestException('User not found');
+    if (!user.verificationInfo?.token)
+      throw new BadRequestException('No OTP found. Please register again');
+
+    if (user.verificationInfo.token !== token)
+      throw new BadRequestException('Invalid OTP');
+
+    // ✅ OTP matches, mark user as verified
+    user.verificationInfo.verified = true;
+    user.verificationInfo.token = undefined; // remove OTP after verification
+    await user.save();
+
+    return { message: 'Email verified successfully' };
   }
 }

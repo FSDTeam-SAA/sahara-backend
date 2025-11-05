@@ -23,7 +23,7 @@ export class UserService {
     return user.save(); // ✅ returns a full Mongoose Document with toObject()
   }
 
-  async findByEmail(email: string): Promise<IUser | null> {
+  async findByEmail(email: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ email });
   }
 
