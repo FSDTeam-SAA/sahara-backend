@@ -4,6 +4,7 @@ import { RegisterDto } from './dto/register.dto';
 import { sendResponse } from '../common/utils/sendResponse';
 import type { Response } from 'express';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
+import { LoginDto } from './dto/login.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -29,5 +30,17 @@ export class AuthController {
   @Post('verify-otp')
   async verifyOtp(@Body() dto: VerifyOtpDto) {
     return this.authService.verifyOtp(dto);
+  }
+
+  @Post('login')
+  async login(@Body() dto: LoginDto, @Res() res: Response) {
+    const result = await this.authService.login(dto.email, dto.password);
+
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Login successful',
+      data: result,
+    });
   }
 }
