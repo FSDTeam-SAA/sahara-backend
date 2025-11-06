@@ -19,6 +19,12 @@ class VerificationInfo {
 
   @Prop()
   refresh_token?: string;
+
+  @Prop()
+  resetOtp?: string;
+
+  @Prop()
+  resetOtpExpiry?: string;
 }
 
 @Schema({ timestamps: true })

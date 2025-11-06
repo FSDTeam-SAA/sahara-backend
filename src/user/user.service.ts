@@ -9,12 +9,6 @@ import { IUser } from './user.interface';
 export class UserService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
-  //   async create(data: Partial<IUser>): Promise<IUser> {
-  //     if (!data.password) throw new Error('Password is required');
-  //     const hash = await bcrypt.hash(data.password, 10);
-  //     return this.userModel.create({ ...data, password: hash });
-  //   }
-
   async create(data: Partial<User>): Promise<UserDocument> {
     if (!data.password) throw new Error('Password is required');
 
@@ -27,17 +21,20 @@ export class UserService {
     return this.userModel.findOne({ email });
   }
 
-  async updateUser(id: string, updateData: any): Promise<IUser | null> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    const updatedUser = await this.userModel.findByIdAndUpdate(id, updateData, {
-      new: true,
-      select: '_id name email password role',
-    });
+  async updateUser(
+    id: string,
+    updateData: { [key: string]: any },
+  ): Promise<IUser | null> {
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      id,
+      { $set: updateData }, // ✅ ensures nested fields like verificationInfo.resetOtp are properly updated
+      {
+        new: true, // return updated document
+        runValidators: true, // validate schema rules on update
+        select: '_id firstName lastName email role verificationInfo', // optional: select what you want
+      },
+    );
 
-    if (updatedUser) {
-      return updatedUser.toObject() as IUser; // Cast the _id property to string
-    }
-
-    return null;
+    return updatedUser ? (updatedUser.toObject() as IUser) : null;
   }
 }
