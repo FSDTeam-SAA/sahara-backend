@@ -13,6 +13,7 @@ import { sendResponse } from '../common/utils/sendResponse';
 import type { Response } from 'express';
 import { VerifyOtpDto } from './dto/verify-otp.dto';
 import { LoginDto } from './dto/login.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -105,7 +106,7 @@ export class AuthController {
   }
 
   // change password
-  @UseGuards(jwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Post('change-password')
   async changePassword(
     @Req() req: Request,
