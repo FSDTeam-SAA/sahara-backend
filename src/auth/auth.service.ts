@@ -164,4 +164,31 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired token');
     }
   }
+
+  async changePassword(
+    userId: string,
+    oldPassword: string,
+    newPassword: string,
+  ) {
+    // find user by Id
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    // verify old password
+    const isMatched = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatched) {
+      throw new BadRequestException('Old password is incorrect');
+    }
+
+    // Hash and update password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+
+    await user.save();
+
+    // return response message
+    return { message: 'password changed successfull' };
+  }
 }

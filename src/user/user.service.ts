@@ -21,6 +21,10 @@ export class UserService {
     return this.userModel.findOne({ email });
   }
 
+  async findById(id: string) {
+    return this.userModel.findById(id);
+  }
+
   async updateUser(
     id: string,
     updateData: { [key: string]: any },
