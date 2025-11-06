@@ -114,6 +114,7 @@ export class AuthController {
     @Body('newPassword') newPassword: string,
     @Res() res: Response,
   ) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const userId = (req as any).user?.userId;
 
     const result = await this.authService.changePassword(
