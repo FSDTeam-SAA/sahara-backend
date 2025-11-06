@@ -114,7 +114,7 @@ export class AuthController {
     @Body('newPassword') newPassword: string,
     @Res() res: Response,
   ) {
-    const userId = (req as any).user?._id;
+    const userId = (req as any).user?.userId;
 
     const result = await this.authService.changePassword(
       userId,
