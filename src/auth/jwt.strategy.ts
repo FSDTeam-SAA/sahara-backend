@@ -12,7 +12,9 @@ interface JwtPayload {
 @Injectable()
 export class JwtStrategy extends PassportStrategy(JwtStrategyBase) {
   constructor() {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     super({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken() as () =>
         | string
         | null,
