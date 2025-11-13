@@ -6,7 +6,7 @@ export const sendEmail = async (
   subject: string,
   html: string,
 ): Promise<void> => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
   const transporter = nodemailer.createTransport({
     host: process.env.MAIL_HOST, // e.g. "smtp.gmail.com"
     port: Number(process.env.MAIL_PORT) || 465,

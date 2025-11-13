@@ -7,6 +7,7 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { EmailModule } from './email/email.module';
 import { ContactUsModule } from './contact-us/contact-us.module';
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ContactUsModule } from './contact-us/contact-us.module';
     AuthModule,
     EmailModule,
     ContactUsModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [AppService],
