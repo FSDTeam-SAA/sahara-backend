@@ -11,6 +11,8 @@ import { OrderModule } from './order/order.module';
 import { PaymentModule } from './payment/payment.module';
 import { AiModule } from './ai/ai.module';
 import { ImageGenarateModule } from './image-genarate/image-genarate.module';
+import { StoryModule } from './story/story.module';
+import { VoiceModule } from './voice/voice.module';
 
 @Module({
   imports: [
@@ -33,6 +35,8 @@ import { ImageGenarateModule } from './image-genarate/image-genarate.module';
     PaymentModule,
     AiModule,
     ImageGenarateModule,
+    StoryModule,
+    VoiceModule,
   ],
   controllers: [AppController],
   providers: [AppService],
