@@ -9,6 +9,8 @@ import { EmailModule } from './email/email.module';
 import { ContactUsModule } from './contact-us/contact-us.module';
 import { OrderModule } from './order/order.module';
 import { PaymentModule } from './payment/payment.module';
+import { AiModule } from './ai/ai.module';
+import { ImageGenarateModule } from './image-genarate/image-genarate.module';
 
 @Module({
   imports: [
@@ -29,6 +31,8 @@ import { PaymentModule } from './payment/payment.module';
     ContactUsModule,
     OrderModule,
     PaymentModule,
+    AiModule,
+    ImageGenarateModule,
   ],
   controllers: [AppController],
   providers: [AppService],
