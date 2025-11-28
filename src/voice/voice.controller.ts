@@ -19,7 +19,8 @@ export class VoiceController {
       body.text,
       body.voiceId,
     );
-    return { audio: audioBytes.toString('base64') }; // for returning in JSON
+    // audioBytes may be null — return empty string or handle as error upstream
+    return { audio: audioBytes ? audioBytes.toString('base64') : '' }; // for returning in JSON
   }
 
   @Post('clone')

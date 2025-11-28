@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { config } from 'dotenv';
 import OpenAI from 'openai';
 
@@ -6,16 +6,16 @@ config();
 
 @Injectable()
 export class ImageGeneratorUtil {
-  private client: OpenAI;
+  private readonly client: OpenAI;
 
   constructor() {
-    const apikey = process.env.GROK_API_KEY;
+    const apiKey = process.env.GROK_API_KEY;
     if (!apiKey) {
       throw new Error('GROK_API_KEY not set in environment');
     }
 
     this.client = new OpenAI({
-      apikey,
+      apiKey,
       baseURL: 'https://api.x.ai/v1',
     });
   }
@@ -28,15 +28,24 @@ export class ImageGeneratorUtil {
         prompt,
       });
 
-      return resp.data?.[0]?
-    } catch (error) {
-        console.error('Error generating image', error)
-        throw new Error(`Failed to generate image ${error.message}`)
+      // The OpenAI images response may include a hosted `url` or a `b64_json` payload.
+      const item = resp.data?.[0];
+      if (!item) return '';
+      if ('url' in item && item.url) return item.url;
+      if ('b64_json' in item && item.b64_json)
+        return `data:image/png;base64,${item.b64_json}`;
+      return '';
+    } catch (error: unknown) {
+      console.error('Error generating image', error);
+      if (error instanceof Error) {
+        throw new Error(`Failed to generate image: ${error.message}`);
+      }
+      throw new Error('Failed to generate image');
     }
   }
 
   // Build Ghibli-style prompt
-   // ------- Build Ghibli-style Prompt -------
+  // ------- Build Ghibli-style Prompt -------
   cartoonizeCharacterPrompt(name: string, uploadedFilename?: string): string {
     let base = `Create a Studio Ghibli style character illustration of ${name}. 
 Use soft colors, expressive eyes, detailed shading, and a warm cinematic atmosphere. 
@@ -48,5 +57,5 @@ Character should look friendly and storybook-appropriate.`;
     }
 
     return base;
-}
+  }
 }

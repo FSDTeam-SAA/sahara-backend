@@ -6,7 +6,7 @@ config();
 
 @Injectable()
 export class StoryGeneratorUtil {
-  private client: OpenAI;
+  private readonly client: OpenAI;
 
   constructor() {
     const apiKey = process.env.GROK_API_KEY;
@@ -91,10 +91,12 @@ Begin now.
       });
 
       return resp.choices?.[0]?.message?.content || '';
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error generating story', error);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      throw new Error(`Failed to generate story: ${error.message}`);
+      if (error instanceof Error) {
+        throw new Error(`Failed to generate story: ${error.message}`);
+      }
+      throw new Error('Failed to generate story');
     }
   }
 

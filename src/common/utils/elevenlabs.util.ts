@@ -1,13 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { config } from 'dotenv';
 import { ElevenLabsClient } from 'elevenlabs';
-import { Readable } from 'stream';
+import { Readable } from 'node:stream';
+
+type ElevenLabsLike = {
+  textToSpeech: {
+    convert: (voiceId: string, request: unknown) => Promise<Readable>;
+  };
+  voices: {
+    add: (request: unknown) => Promise<Record<string, unknown> | null>;
+  };
+};
 
 config();
 
 @Injectable()
 export class ElevenLabsUtil {
-  private client: ElevenLabsClient;
+  private readonly client: ElevenLabsClient;
 
   constructor() {
     const apiKey = process.env.ELEVENLABS_API_KEY;
@@ -26,41 +35,34 @@ export class ElevenLabsUtil {
   ): Promise<Buffer | null> {
     if (!audio) return null;
 
-    // Case: already a Buffer / Uint8Array
+    // Already a Buffer / Uint8Array
     if (Buffer.isBuffer(audio)) return audio;
     if (audio instanceof Uint8Array) return Buffer.from(audio);
 
-    // Case: Readable stream
-    if (audio instanceof Readable) {
-      const chunks: Buffer[] = [];
-      for await (const chunk of audio) {
-        chunks.push(
-          Buffer.isBuffer(chunk)
-            ? chunk
-            : (Buffer.from(chunk) as Buffer<ArrayBufferLike>),
-        );
-      }
-      return Buffer.concat(chunks);
-    }
-
-    // Case: iterable (async generator)
-    if (audio[Symbol.asyncIterator]) {
-      const chunks: Buffer[] = [];
-      for await (const chunk of audio) {
-        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-      }
-      return Buffer.concat(chunks);
-    }
-
-    // Fallback
+    // Otherwise treat as an async iterable / readable stream and collect chunks.
+    const chunks: Buffer[] = [];
     try {
-      const chunks: Buffer[] = [];
-      for await (const chunk of audio) {
-        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      for await (const chunk of audio as AsyncIterable<
+        Buffer | Uint8Array | string | ArrayBuffer
+      >) {
+        if (Buffer.isBuffer(chunk)) {
+          chunks.push(chunk);
+        } else if (chunk instanceof Uint8Array) {
+          chunks.push(Buffer.from(chunk));
+        } else if (typeof chunk === 'string') {
+          chunks.push(Buffer.from(chunk));
+        } else if (chunk instanceof ArrayBuffer) {
+          chunks.push(Buffer.from(new Uint8Array(chunk)));
+        } else {
+          // As a last fallback, coerce to Buffer via string conversion
+          chunks.push(Buffer.from(String(chunk)));
+        }
       }
       return Buffer.concat(chunks);
     } catch (err) {
-      throw new Error(`Unable to normalize audio object: ${err}`);
+      throw new Error(
+        `Unable to normalize audio object: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 
@@ -70,22 +72,20 @@ export class ElevenLabsUtil {
   async synthesizeVoiceFromText(
     text: string,
     voiceId = 'JBFqnCBsd6RMkjVDRZzb',
-  ): Promise<Buffer> {
+  ): Promise<Buffer | null> {
     try {
-      const response = await this.client.textToSpeech.convert({
+      // Convert signature is convert(voiceId, request)
+      const request = {
         text,
-        voiceId,
-        modelId: 'eleven_multilingual_v2',
-        outputFormat: 'mp3_44100_128',
-      });
+        model_id: 'eleven_multilingual_v2',
+        output_format: 'mp3_44100_128',
+      } as unknown;
+      const client = this.client as unknown as ElevenLabsLike;
+      const response = await client.textToSpeech.convert(voiceId, request);
 
       return await this.normalizeAudioOutput(response);
     } catch (customError: unknown) {
-      if (
-        typeof customError === 'object' &&
-        customError !== null &&
-        'message' in customError
-      ) {
+      if (customError instanceof Error) {
         throw new Error(`Error generating voice: ${customError.message}`);
       } else {
         throw new Error('An unknown error occurred');
@@ -96,22 +96,39 @@ export class ElevenLabsUtil {
   // -----------------------------------------------------
   // Clone a voice from uploaded file
   // -----------------------------------------------------
-  async cloneVoiceFromUpload(file: Express.Multer.File): Promise<string> {
+  async cloneVoiceFromUpload(
+    file: { buffer: Buffer; originalname?: string } | undefined,
+  ): Promise<string> {
     if (!file) {
       return 'JBFqnCBsd6RMkjVDRZzb'; // default voice
     }
 
     try {
       const fileBuffer = file.buffer;
+      const stream = Readable.from(fileBuffer);
 
-      const result = await this.client.voices.ivc.create({
-        name: 'My Voice Clone',
-        files: [fileBuffer],
-      });
+      // Add a voice (create a voice clone) using the client — `add` accepts files as readable streams.
+      const addReq = {
+        name: file.originalname || 'My Voice Clone',
+        files: [stream],
+      } as unknown;
+      const client2 = this.client as unknown as ElevenLabsLike;
+      const result = await client2.voices.add(addReq);
 
-      return result.voiceId;
-    } catch (error: any) {
-      throw new Error(`Error cloning voice: ${error.message}`);
+      const typed = result as unknown;
+      if (typeof typed === 'object' && typed !== null) {
+        const r = typed as Record<string, unknown>;
+        const maybeVoiceId = r['voiceId'];
+        if (typeof maybeVoiceId === 'string') return maybeVoiceId;
+        const maybeId = r['id'];
+        if (typeof maybeId === 'string') return maybeId;
+      }
+      return '';
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw new Error(`Error cloning voice: ${error.message}`);
+      }
+      throw new Error('An unknown error occurred while cloning voice');
     }
   }
 }
