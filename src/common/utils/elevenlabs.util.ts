@@ -102,6 +102,7 @@ export class ElevenLabsUtil {
     if (!file) {
       return 'JBFqnCBsd6RMkjVDRZzb'; // default voice
     }
+    console.log(1);
 
     try {
       const fileBuffer = file.buffer;
@@ -114,14 +115,13 @@ export class ElevenLabsUtil {
       } as unknown;
       const client2 = this.client as unknown as ElevenLabsLike;
       const result = await client2.voices.add(addReq);
+      console.log(2, client2, result);
 
       const typed = result as unknown;
       if (typeof typed === 'object' && typed !== null) {
         const r = typed as Record<string, unknown>;
-        const maybeVoiceId = r['voiceId'];
+        const maybeVoiceId = r['voiceId'] || r['voice_id'] || r['id'];
         if (typeof maybeVoiceId === 'string') return maybeVoiceId;
-        const maybeId = r['id'];
-        if (typeof maybeId === 'string') return maybeId;
       }
       return '';
     } catch (error: unknown) {
