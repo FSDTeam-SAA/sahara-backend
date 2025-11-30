@@ -46,14 +46,14 @@ export class ImageGeneratorUtil {
 
   // Build Ghibli-style prompt
   // ------- Build Ghibli-style Prompt -------
-  cartoonizeCharacterPrompt(name: string, uploadedFilename?: string): string {
+  cartoonizeCharacterPrompt(name: string, uploadedImageUrl?: string): string {
     let base = `Create a Studio Ghibli style character illustration of ${name}. 
 Use soft colors, expressive eyes, detailed shading, and a warm cinematic atmosphere. 
-Make it look like an original Ghibli movie frame. 
+Make it resemble an original Ghibli movie frame. 
 Character should look friendly and storybook-appropriate.`;
 
-    if (uploadedFilename) {
-      base += ` Use the uploaded reference photo "${uploadedFilename}" to match the face, hair style, and appearance accurately.`;
+    if (uploadedImageUrl) {
+      base += ` Use this reference image to match the face and appearance accurately: ${uploadedImageUrl}.`;
     }
 
     return base;

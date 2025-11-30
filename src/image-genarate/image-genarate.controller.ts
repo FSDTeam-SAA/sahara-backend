@@ -1,12 +1,16 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Post, Body, UploadedFile } from '@nestjs/common';
+import { Multer } from 'multer';
 import { ImageService } from './image-genarate.service';
 
 @Controller('image')
 export class ImageController {
   constructor(private readonly imageService: ImageService) {}
 
-  @Get('ghibli')
-  async generate(@Query('name') name: string, @Query('file') file?: string) {
+  @Post('ghibli')
+  async generate(
+    @Body('name') name: string,
+    @UploadedFile() file?: Multer.File,
+  ) {
     const imageUrl = await this.imageService.generateGhibliCharacter(
       name,
       file,
