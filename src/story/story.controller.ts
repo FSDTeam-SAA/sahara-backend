@@ -7,7 +7,6 @@ export class StoryController {
 
   @Post('generate')
   async generateStory(@Body() body: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return this.storyService.createStory(body);
   }
 }
