@@ -18,7 +18,7 @@ export class StoryInfo {
   style: string;
 
   @Prop({ required: true })
-  genre: number;
+  genre: string;
 
   @Prop({ type: [{ name: String }], required: true })
   characters: { name: string }[];
@@ -28,6 +28,9 @@ export class StoryInfo {
 
   @Prop({ required: true })
   chapterCount: number;
+
+  @Prop()
+  genaratedStory: string;
 }
 
 export const StoryInfoSchema = SchemaFactory.createForClass(StoryInfo);

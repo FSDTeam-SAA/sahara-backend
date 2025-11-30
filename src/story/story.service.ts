@@ -56,6 +56,7 @@ export class StoryService {
       characters,
       beginning,
       chapterCount,
+      genaratedStory: text,
     });
 
     return {
