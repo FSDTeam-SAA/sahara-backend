@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { VoiceService } from './voice.service';
-import { MulterFile } from 'multer';
 
 @Controller('voice')
 export class VoiceController {
@@ -25,7 +24,9 @@ export class VoiceController {
 
   @Post('clone')
   @UseInterceptors(FileInterceptor('file'))
-  async clone(@UploadedFile() file: MulterFile) {
+  async clone(
+    @UploadedFile() file?: { buffer: Buffer; originalname?: string },
+  ) {
     return this.voiceService.cloneVoice(file);
   }
 }

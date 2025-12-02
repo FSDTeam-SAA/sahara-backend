@@ -14,55 +14,65 @@ export class StoryService {
   ) {}
 
   async createStory(payload: {
-    userId: string;
-    title: string;
-    language: string;
-    style: string;
-    genre: number;
-    characters: { name: string }[];
-    beginning: string;
-    chapterCount?: number;
-  }) {
-    const {
-      userId,
-      title,
-      language,
-      style,
-      genre,
-      characters,
-      beginning,
-      chapterCount = 4,
-    } = payload;
+  userId: string;
+  title: string;
+  language: string;
+  style: string;
+  genre: number;
+  characters: { name: string }[];
+  beginning: string;
+  chapterCount?: number;
+}) {
+  const {
+    userId,
+    title,
+    language,
+    style,
+    genre,
+    characters,
+    beginning,
+    chapterCount = 4,
+  } = payload;
 
-    // generate story
-    const text = await this.storyUtil.generateStory(
-      title,
-      language,
-      style,
-      genre.toString(),
-      characters,
-      beginning,
-      chapterCount,
-    );
+  // Step 1: Generate raw story text
+  const text = await this.storyUtil.generateStory(
+    title,
+    language,
+    style,
+    genre.toString(),
+    characters,
+    beginning,
+    chapterCount,
+  );
 
-    const chapters = this.storyUtil.splitIntoChapters(text);
+  // Step 2: Split into chapter objects
+  const rawChapters = this.storyUtil.splitIntoChapters(text);
 
-    const created = await this.storyModel.create({
-      userId,
-      title,
-      language,
-      style,
-      genre,
-      characters,
-      beginning,
-      chapterCount,
-      genaratedStory: text,
-    });
+  // Step 3: Convert chapter objects to your required structure
+  const processedChapters = rawChapters.map((ch, index) => ({
+    chapter: index + 1,
+    title: ch.title,
+    text: ch.text,
+    audioUrl: null, // you can fill this later after ElevenLabs TTS
+  }));
 
-    return {
-      story: text,
-      chapters,
-      saved: created,
-    };
-  }
+  // Step 4: Save to database
+  const created = await this.storyModel.create({
+    userId,
+    title,
+    language,
+    style,
+    genre,
+    characters,
+    beginning,
+    chapterCount,
+    generatedStory: processedChapters,
+  });
+
+  return {
+    storyText: text,
+    chapters: processedChapters,
+    saved: created,
+  };
+}
 }

@@ -3,6 +3,23 @@ import { Document, Types } from 'mongoose';
 
 export type StoryInfoDocument = StoryInfo & Document;
 
+@Schema()
+export class Chapter {
+  @Prop({ required: true })
+  chapter: number;
+
+  @Prop({ required: true })
+  title: string;
+
+  @Prop({ required: true })
+  text: string;
+
+  @Prop()
+  audioUrl?: string;
+}
+
+export const ChapterSchema = SchemaFactory.createForClass(Chapter);
+
 @Schema({ timestamps: true })
 export class StoryInfo {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
@@ -29,8 +46,8 @@ export class StoryInfo {
   @Prop({ required: true })
   chapterCount: number;
 
-  @Prop()
-  genaratedStory: string;
+  @Prop({ type: [ChapterSchema], default: [] })
+  generatedStory: Chapter[];
 }
 
 export const StoryInfoSchema = SchemaFactory.createForClass(StoryInfo);
