@@ -92,6 +92,7 @@ export class StoryService {
     const story = await this.storyModel.findById(storyId);
     if (!story) return null;
     const idx = story.generatedStory.findIndex(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       (c: any) => c.chapter === chapterNumber,
     );
     if (idx === -1) return null;
@@ -102,5 +103,17 @@ export class StoryService {
 
   async getStoryById(storyId: string) {
     return this.storyModel.findById(storyId).lean();
+  }
+
+  async getStoriesByUser(userId: string) {
+    return this.storyModel.find({ userId }).lean();
+  }
+
+  async updateStory(storyId: string, payload: any) {
+    return this.storyModel.findByIdAndUpdate(storyId, payload, { new: true });
+  }
+
+  async deleteStory(storyId: string) {
+    return this.storyModel.findByIdAndDelete(storyId);
   }
 }
