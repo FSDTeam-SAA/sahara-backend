@@ -46,6 +46,9 @@ export class StoryInfo {
   @Prop({ required: true })
   chapterCount: number;
 
+  @Prop()
+  voiceId?: string;
+
   @Prop({ type: [ChapterSchema], default: [] })
   generatedStory: Chapter[];
 }
