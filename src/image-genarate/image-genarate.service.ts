@@ -10,6 +10,7 @@ export class ImageService {
   constructor(private readonly imageUtil: ImageGeneratorUtil) {}
   async generateGhibliCharacter(name: string, file?: UploadedFile) {
     let uploadedImageUrl: string | undefined;
+    let characterDescription: string | undefined;
 
     // If user uploads a reference image
     if (file) {
@@ -68,13 +69,21 @@ export class ImageService {
           'Uploaded file does not contain a valid path or buffer',
         );
       }
+
+      // Step 2: Analyze the image with Grok Vision to get detailed description
+      if (uploadedImageUrl) {
+        characterDescription =
+          await this.imageUtil.analyzeImageWithVision(uploadedImageUrl);
+      }
     }
 
-    // Build prompt
+    // Build prompt with character description from vision analysis
     const prompt = this.imageUtil.cartoonizeCharacterPrompt(
       name,
-      uploadedImageUrl,
+      characterDescription,
     );
+
+    console.log('prompt', prompt);
 
     // Generate final Ghibli-style image
     return this.imageUtil.generateImageFromPrompt(prompt);

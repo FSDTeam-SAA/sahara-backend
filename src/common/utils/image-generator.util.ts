@@ -20,9 +20,50 @@ export class ImageGeneratorUtil {
     });
   }
 
-  // ------------- Genarate Image-------------
+  // ------------- Analyze Image with Vision (Grok-2-1212) ----------
+  async analyzeImageWithVision(imageUrl: string): Promise<string> {
+    try {
+      console.log('Analyzing image with vision:', imageUrl);
+
+      const response = await this.client.chat.completions.create({
+        model: 'grok-2-vision-1212',
+        messages: [
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: `Briefly describe this person's appearance for character generation. Include gender, face shape, eye color, hair color, body shape, Image angle, skin tone, hair style and any other distinctive features. Be concise.`,
+              },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: imageUrl,
+                },
+              },
+            ],
+          },
+        ],
+        max_tokens: 150,
+      });
+
+      const description =
+        response.choices?.[0]?.message?.content || 'No description available';
+      console.log('Vision Analysis:', description);
+      return description;
+    } catch (error: unknown) {
+      console.error('Error analyzing image with vision', error);
+      if (error instanceof Error) {
+        throw new Error(`Failed to analyze image: ${error.message}`);
+      }
+      throw new Error('Failed to analyze image');
+    }
+  }
+
+  // ------------- Generate Image-------------
   async generateImageFromPrompt(prompt: string): Promise<string> {
     try {
+      console.log('promt', prompt);
       const resp = await this.client.images.generate({
         model: 'grok-2-image',
         prompt,
@@ -44,18 +85,22 @@ export class ImageGeneratorUtil {
     }
   }
 
-  // Build Ghibli-style prompt
-  // ------- Build Ghibli-style Prompt -------
-  cartoonizeCharacterPrompt(name: string, uploadedImageUrl?: string): string {
-    let base = `Create a Studio Ghibli style character illustration of ${name}. 
-Use soft colors, expressive eyes, detailed shading, and a warm cinematic atmosphere. 
-Make it resemble an original Ghibli movie frame. 
-Character should look friendly and storybook-appropriate.`;
+  // Build Ghibli-style prompt with character description
+  // ------- Build Ghibli-style Prompt with Vision Analysis -------
+  cartoonizeCharacterPrompt(
+    name: string,
+    characterDescription?: string,
+  ): string {
+    console.log('Character Description', characterDescription);
 
-    if (uploadedImageUrl) {
-      base += ` Use this reference image to match the face and appearance accurately: ${uploadedImageUrl}.`;
+    let prompt = ` character of ${name}. ${characterDescription || ''} Soft colors, expressive eyes, warm atmosphere, friendly appearance for children.`;
+
+    // Ensure prompt doesn't exceed 1024 characters
+    if (prompt.length > 1024) {
+      prompt = prompt.substring(0, 1020) + '...';
     }
 
-    return base;
+    console.log('Final Prompt Length:', prompt.length);
+    return prompt;
   }
 }
