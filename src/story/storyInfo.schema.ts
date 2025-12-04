@@ -16,6 +16,9 @@ export class Chapter {
 
   @Prop()
   audioUrl?: string;
+
+  @Prop()
+  chapterImage: string;
 }
 
 export const ChapterSchema = SchemaFactory.createForClass(Chapter);

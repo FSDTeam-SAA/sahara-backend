@@ -3,12 +3,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { StoryGeneratorUtil } from '../common/utils/story-generator.util';
 import { StoryInfo, StoryInfoDocument } from './storyInfo.schema';
+import { ImageGeneratorUtil } from '../common/utils/image-generator.util';
 
 @Injectable()
 export class StoryService {
   constructor(
     private readonly storyUtil: StoryGeneratorUtil,
-
+    private readonly imageGenerator: ImageGeneratorUtil,
     @InjectModel(StoryInfo.name)
     private storyModel: Model<StoryInfoDocument>,
   ) {}
@@ -69,11 +70,36 @@ export class StoryService {
       generatedStory: processedChapters,
     });
 
+    // Step 5: Asynchronously generate images for each chapter
+    this.generateChapterImages(created);
+
     return {
       storyText: text,
       chapters: processedChapters,
       saved: created,
     };
+  }
+
+  private async generateChapterImages(story: StoryInfoDocument) {
+    for (const chapter of story.generatedStory) {
+      try {
+        const prompt = `A children's storybook illustration for a chapter titled '${chapter.title}' from the story '${story.title}' in a ${story.style} style.`;
+        const imageUrl =
+          await this.imageGenerator.generateImageFromPrompt(prompt);
+
+        if (imageUrl) {
+          await this.storyModel.updateOne(
+            { _id: story._id, 'generatedStory.chapter': chapter.chapter },
+            { $set: { 'generatedStory.$.chapterImage': imageUrl } },
+          );
+        }
+      } catch (error) {
+        console.error(
+          `Failed to generate image for chapter ${chapter.chapter} of story ${story._id as string}`,
+          error,
+        );
+      }
+    }
   }
 
   async setVoiceId(storyId: string, voiceId: string) {

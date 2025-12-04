@@ -93,7 +93,7 @@ export class ImageGeneratorUtil {
   ): string {
     console.log('Character Description', characterDescription);
 
-    let prompt = ` character of ${name}. ${characterDescription || ''} Soft colors, expressive eyes, warm atmosphere, friendly appearance for children.`;
+    let prompt = `cartoon character of ${name}. ${characterDescription || ''} Soft colors, expressive eyes, warm atmosphere, friendly appearance for children.`;
 
     // Ensure prompt doesn't exceed 1024 characters
     if (prompt.length > 1024) {
