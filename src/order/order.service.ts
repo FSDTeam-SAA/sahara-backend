@@ -19,12 +19,15 @@ export class OrderService {
 
   // Get all orders
   async getAllOrders() {
-    return await this.orderModel.find().populate('userId', 'name email');
+    return await this.orderModel
+      .find()
+      .populate('userId', 'name email')
+      .populate('storyBookId');
   }
 
   // Get orders by userId
   async getOrdersByUser(userId: string) {
-    return await this.orderModel.find({ userId });
+    return await this.orderModel.find({ userId }).populate('storyBookId');
   }
 
   // Update order status

@@ -14,13 +14,10 @@ export class Order {
   @Prop({ type: Types.ObjectId, ref: 'User', required: true })
   userId: Types.ObjectId;
 
-  @Prop({ required: true })
-  bookName: string;
+  @Prop({ required: true, ref: 'StoryInfo' })
+  storyBookId: string;
 
-  @Prop({ required: true })
-  date: string;
-
-  @Prop({ required: true })
+  @Prop({ required: true, enum: ['ebook', 'print + ebook'], default: 'ebook' })
   formate: string;
 
   @Prop({ required: true })
@@ -32,9 +29,6 @@ export class Order {
     default: OrderStatus.IN_PROCESS,
   })
   status: OrderStatus;
-
-  @Prop({ required: true })
-  location: string;
 }
 
 export const OrderSchema = SchemaFactory.createForClass(Order);

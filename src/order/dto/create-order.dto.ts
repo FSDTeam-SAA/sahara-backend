@@ -9,6 +9,9 @@ export class CreateOrderDto {
   @IsNotEmpty()
   bookName: string;
 
+  @IsNotEmpty()
+  storyBookId: Types.ObjectId;
+
   @IsString()
   date: string;
 
@@ -17,7 +20,4 @@ export class CreateOrderDto {
 
   @IsNumber()
   price: number;
-
-  @IsString()
-  location: string;
 }
