@@ -17,7 +17,7 @@ export class AuthService {
     private userService: UserService,
     private emailService: EmailService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async register(
     firstName: string,
@@ -100,7 +100,7 @@ export class AuthService {
     const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 min
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-    await this.userService.updateUser((user as any)._id, {
+    await this.userService.updateUserInternal((user as any)._id, {
       'verificationInfo.resetOtp': otp,
       'verificationInfo.resetOtpExpiry': expiry,
     });
@@ -134,7 +134,7 @@ export class AuthService {
 
     // clear OTP (optional)
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
-    await this.userService.updateUser((user as any)._id, {
+    await this.userService.updateUserInternal((user as any)._id, {
       'verificationInfo.resetOtp': null,
       'verificationInfo.resetOtpExpiry': null,
     });
@@ -145,7 +145,7 @@ export class AuthService {
   // 🔐 STEP 3: reset password using reset token
   async resetPasswordWithToken(userId: string, newPassword: string) {
     const hashed = await bcrypt.hash(newPassword, 10);
-    await this.userService.updateUser(userId, { password: hashed });
+    await this.userService.updateUserInternal(userId, { password: hashed });
     return { message: 'Password reset successful' };
   }
 

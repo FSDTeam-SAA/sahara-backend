@@ -3,18 +3,20 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from './user.schema';
 import * as bcrypt from 'bcrypt';
-import { IUser } from './user.interface';
+import { UpdateUserDto } from './dto/update-user.dto';
+import cloudinary from '../common/cloudinary';
+import type { File as MulterFile } from 'multer';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) { }
 
   async create(data: Partial<User>): Promise<UserDocument> {
     if (!data.password) throw new Error('Password is required');
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
     const user = new this.userModel({ ...data, password: hashedPassword });
-    return user.save(); // ✅ returns a full Mongoose Document with toObject()
+    return user.save();
   }
 
   async findByEmail(email: string): Promise<UserDocument | null> {
@@ -27,18 +29,53 @@ export class UserService {
 
   async updateUser(
     id: string,
-    updateData: { [key: string]: any },
-  ): Promise<IUser | null> {
+    updateUserDto: UpdateUserDto,
+    avatar?: MulterFile,
+  ): Promise<Partial<User> | null> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateData: any = { ...updateUserDto };
+
+    if (avatar) {
+      const b64 = Buffer.from(avatar.buffer).toString('base64');
+      const dataURI = 'data:' + avatar.mimetype + ';base64,' + b64;
+      const res = await cloudinary.uploader.upload(dataURI, {
+        folder: 'avatars',
+      });
+      updateData.avatar = res.secure_url;
+    }
+
+    console.log("updateData", updateData);
+
     const updatedUser = await this.userModel.findByIdAndUpdate(
       id,
-      { $set: updateData }, // ✅ ensures nested fields like verificationInfo.resetOtp are properly updated
+      { $set: updateData },
       {
-        new: true, // return updated document
-        runValidators: true, // validate schema rules on update
-        select: '_id firstName lastName email role verificationInfo', // optional: select what you want
+        new: true,
+        runValidators: true,
+        select:
+          'firstName lastName dateOfBirth avatar gender address phoneNum email',
       },
     );
 
-    return updatedUser ? (updatedUser.toObject() as IUser) : null;
+    if (!updatedUser) {
+      throw new Error(`User with ID ${id} not found or could not be updated.`);
+    }
+
+    return updatedUser ? updatedUser.toObject() : null;
+  }
+
+  /**
+   * Internal method for system-level updates (e.g., password reset OTP, verification fields)
+   * Bypasses DTO validation for internal operations
+   */
+  async updateUserInternal(
+    id: string,
+    updateData: Record<string, any>,
+  ): Promise<UserDocument | null> {
+    return this.userModel.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true },
+    );
   }
 }
