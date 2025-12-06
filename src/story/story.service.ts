@@ -12,7 +12,7 @@ export class StoryService {
     private readonly imageGenerator: ImageGeneratorUtil,
     @InjectModel(StoryInfo.name)
     private storyModel: Model<StoryInfoDocument>,
-  ) {}
+  ) { }
 
   async createStory(payload: {
     userId: string;
@@ -131,8 +131,14 @@ export class StoryService {
     return this.storyModel.findById(storyId).lean();
   }
 
-  async getStoriesByUser(userId: string) {
-    return this.storyModel.find({ userId }).lean();
+  async getStoriesByUser(userId: string, search?: string) {
+    const query: any = { userId };
+
+    if (search) {
+      query.title = { $regex: search, $options: 'i' };
+    }
+
+    return this.storyModel.find(query).lean();
   }
 
   async updateStory(storyId: string, payload: any) {

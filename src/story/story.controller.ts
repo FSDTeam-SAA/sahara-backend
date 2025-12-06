@@ -6,12 +6,13 @@ import {
   Param,
   Put,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { StoryService } from './story.service';
 import { UpdateStoryDto } from './dto/update-story.dto';
 @Controller('story')
 export class StoryController {
-  constructor(private readonly storyService: StoryService) {}
+  constructor(private readonly storyService: StoryService) { }
 
   @Post('generate')
   async generateStory(@Body() body: any) {
@@ -19,8 +20,11 @@ export class StoryController {
   }
 
   @Get('user/:id')
-  async getStoriesByUser(@Param('id') id: string) {
-    return this.storyService.getStoriesByUser(id);
+  async getStoriesByUser(
+    @Param('id') id: string,
+    @Query('search') search?: string,
+  ) {
+    return this.storyService.getStoriesByUser(id, search);
   }
 
   @Get(':id')
