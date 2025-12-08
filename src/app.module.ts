@@ -13,6 +13,7 @@ import { AiModule } from './ai/ai.module';
 import { ImageGenarateModule } from './image-genarate/image-genarate.module';
 import { StoryModule } from './story/story.module';
 import { VoiceModule } from './voice/voice.module';
+import { StatisticsModule } from './statistics/statistics.module';
 
 @Module({
   imports: [
@@ -37,8 +38,9 @@ import { VoiceModule } from './voice/voice.module';
     ImageGenarateModule,
     StoryModule,
     VoiceModule,
+    StatisticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
