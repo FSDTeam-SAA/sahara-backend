@@ -1,12 +1,28 @@
-import { Body, Controller, Post, Headers } from '@nestjs/common';
+import { Body, Controller, Post, Headers, Get, Query, Res } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
-import { Request } from 'express';
+import type { Request, Response } from 'express';
+import { sendResponse } from '../common/utils/sendResponse';
 // import Stripe from 'stripe';
 
 @Controller('payments')
 export class PaymentController {
-  constructor(private paymentService: PaymentService) {}
+  constructor(private paymentService: PaymentService) { }
+
+  @Get()
+  async getAllPayments(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Res() res: Response,
+  ) {
+    const result = await this.paymentService.findAll(Number(page), Number(limit));
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Payments retrieved successfully',
+      data: result,
+    });
+  }
 
   @Post('create-checkout')
   createPayment(@Body() dto: CreatePaymentDto) {

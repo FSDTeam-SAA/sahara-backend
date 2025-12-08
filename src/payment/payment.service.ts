@@ -53,6 +53,29 @@ export class PaymentService {
     return { url: session.url };
   }
 
+  async findAll(page: number, limit: number) {
+    const skip = (page - 1) * limit;
+
+    const total = await this.paymentModel.countDocuments();
+    const payments = await this.paymentModel
+      .find()
+      .populate('userId', 'firstName lastName email phoneNum')
+      .skip(skip)
+      .limit(limit)
+      .lean()
+      .exec();
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      payments,
+      total,
+      page,
+      limit,
+      totalPages,
+    };
+  }
+
   // 2. Webhook Handler
   async handleWebhook(event: Stripe.Event) {
     if (event.type === 'checkout.session.completed') {
