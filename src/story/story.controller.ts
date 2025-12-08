@@ -7,9 +7,13 @@ import {
   Put,
   Delete,
   Query,
+  Res,
 } from '@nestjs/common';
 import { StoryService } from './story.service';
 import { UpdateStoryDto } from './dto/update-story.dto';
+import type { Response } from 'express';
+import { sendResponse } from '../common/utils/sendResponse';
+
 @Controller('story')
 export class StoryController {
   constructor(private readonly storyService: StoryService) { }
@@ -17,6 +21,26 @@ export class StoryController {
   @Post('generate')
   async generateStory(@Body() body: any) {
     return this.storyService.createStory(body);
+  }
+
+  @Get()
+  async getAllStories(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Res() res: Response,
+    @Query('search') search?: string,
+  ) {
+    const result = await this.storyService.findAll(
+      Number(page),
+      Number(limit),
+      search,
+    );
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Stories retrieved successfully',
+      data: result,
+    });
   }
 
   @Get('user/:id')

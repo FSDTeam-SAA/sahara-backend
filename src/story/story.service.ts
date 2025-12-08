@@ -131,6 +131,33 @@ export class StoryService {
     return this.storyModel.findById(storyId).lean();
   }
 
+  async findAll(page: number, limit: number, search?: string) {
+    const skip = (page - 1) * limit;
+    const query: any = {};
+
+    if (search) {
+      query.title = { $regex: search, $options: 'i' };
+    }
+
+    const total = await this.storyModel.countDocuments(query);
+    const stories = await this.storyModel
+      .find(query)
+      .skip(skip)
+      .limit(limit)
+      .lean()
+      .exec();
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      stories,
+      total,
+      page,
+      limit,
+      totalPages,
+    };
+  }
+
   async getStoriesByUser(userId: string, search?: string) {
     const query: any = { userId };
 

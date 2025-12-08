@@ -7,6 +7,8 @@ import {
   Res,
   UseInterceptors,
   UploadedFile,
+  Get,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -19,6 +21,21 @@ import type { File as MulterFile } from 'multer';
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) { }
+
+  @Get()
+  async getAllUsers(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+    @Res() res: Response,
+  ) {
+    const result = await this.userService.findAll(Number(page), Number(limit));
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Users retrieved successfully',
+      data: result,
+    });
+  }
 
   @UseGuards(JwtAuthGuard)
   @Patch('me')
