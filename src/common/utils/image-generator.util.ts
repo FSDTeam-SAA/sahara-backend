@@ -1,16 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { config } from 'dotenv';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 import { v4 as uuidv4 } from 'uuid';
+import cloudinary from '../cloudinary';
 
 config();
 
 @Injectable()
 export class ImageGeneratorUtil {
   private readonly client: GoogleGenerativeAI;
-  private readonly MODEL_NAME = 'gemini-2.0-flash-exp';
+  private readonly MODEL_NAME = 'gemini-2.5-flash-image';
 
   constructor() {
     const apiKey = process.env.GEMINI_API_KEY;
@@ -66,9 +67,12 @@ export class ImageGeneratorUtil {
       const result = await model.generateContent(prompt);
       const response = result.response;
 
-      // Process the response to get image data
-      const processedResult = await this.processResponse(response, 'img');
-      return processedResult.base64String;
+      // Process the response to get image data and upload to Cloudinary
+      const cloudinaryUrl = await this.processResponseAndUpload(
+        response,
+        'generated-image',
+      );
+      return cloudinaryUrl;
     } catch (error: unknown) {
       console.error('Error generating image', error);
       if (error instanceof Error) {
@@ -107,8 +111,11 @@ export class ImageGeneratorUtil {
       ]);
       const response = result.response;
 
-      const processedResult = await this.processResponse(response, 'char');
-      return processedResult.base64String;
+      const cloudinaryUrl = await this.processResponseAndUpload(
+        response,
+        'cartoonized-character',
+      );
+      return cloudinaryUrl;
     } catch (error: unknown) {
       console.error('Cartoonize character failed:', error);
       if (error instanceof Error) {
@@ -118,7 +125,49 @@ export class ImageGeneratorUtil {
     }
   }
 
-  // ------------- Process Response Helper -------------
+  // ------------- Process Response and Upload to Cloudinary Helper -------------
+  private async processResponseAndUpload(
+    response: unknown,
+    folder: string,
+  ): Promise<string> {
+    // Narrow unknown to expected structure safely
+    const resp = response as {
+      candidates?: Array<{
+        content?: { parts?: Array<{ inlineData?: { data?: string } }> };
+      }>;
+    };
+    const candidates = resp?.candidates;
+    if (Array.isArray(candidates) && candidates.length > 0) {
+      for (const candidate of candidates) {
+        const parts = candidate?.content?.parts;
+        if (Array.isArray(parts) && parts.length > 0) {
+          for (const part of parts) {
+            const imageBytes = part?.inlineData?.data;
+            if (typeof imageBytes === 'string' && imageBytes.length > 0) {
+              // Upload base64 image to Cloudinary
+              const uploadResponse = await cloudinary.uploader.upload(
+                `data:image/png;base64,${imageBytes}`,
+                {
+                  folder: `ghibli-characters/${folder}`,
+                  resource_type: 'auto',
+                },
+              );
+
+              console.log(
+                'Image uploaded to Cloudinary:',
+                uploadResponse.secure_url,
+              );
+              return uploadResponse.secure_url;
+            }
+          }
+        }
+      }
+    }
+
+    throw new Error('Model response did not contain image data');
+  }
+
+  // ------------- Process Response Helper (Legacy - kept for backward compatibility) -----
   private async processResponse(
     response: unknown,
     prefix: string,
