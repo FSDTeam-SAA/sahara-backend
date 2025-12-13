@@ -16,7 +16,7 @@ import { sendResponse } from '../common/utils/sendResponse';
 
 @Controller('story')
 export class StoryController {
-  constructor(private readonly storyService: StoryService) { }
+  constructor(private readonly storyService: StoryService) {}
 
   @Post('generate')
   async generateStory(@Body() body: any) {

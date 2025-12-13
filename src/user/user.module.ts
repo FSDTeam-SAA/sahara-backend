@@ -21,4 +21,4 @@ import { StoryInfo, StoryInfoSchema } from '../story/storyInfo.schema';
   controllers: [UserController],
   exports: [UserService],
 })
-export class UserModule { }
+export class UserModule {}

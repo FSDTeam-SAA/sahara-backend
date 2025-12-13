@@ -1,23 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { config } from 'dotenv';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 config();
 
 @Injectable()
 export class StoryGeneratorUtil {
-  private readonly client: OpenAI;
+  private readonly client: GoogleGenerativeAI;
 
   constructor() {
-    const apiKey = process.env.GROK_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      throw new Error('GROK_API_KEY not set in environment');
+      throw new Error('GEMINI_API_KEY not set in environment');
     }
 
-    this.client = new OpenAI({
-      apiKey,
-      baseURL: 'https://api.x.ai/v1',
-    });
+    this.client = new GoogleGenerativeAI(apiKey);
   }
 
   // ---------- Build Story Prompt ----------
@@ -80,17 +77,14 @@ Begin now.
     );
 
     try {
-      const resp = await this.client.chat.completions.create({
-        model: 'grok-4',
-        messages: [
-          { role: 'system', content: 'You are a creative story writer.' },
-          { role: 'user', content: prompt },
-        ],
-        max_tokens: 5000,
-        temperature: 0.8,
+      console.log(`--- Generating Story: ${title} ---`);
+      const model = this.client.getGenerativeModel({
+        model: 'gemini-2.0-flash-exp',
       });
+      const result = await model.generateContent(prompt);
+      const response = result.response;
 
-      return resp.choices?.[0]?.message?.content || '';
+      return response.text() || '';
     } catch (error: unknown) {
       console.error('Error generating story', error);
       if (error instanceof Error) {

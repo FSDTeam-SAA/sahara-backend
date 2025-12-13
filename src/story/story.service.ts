@@ -12,7 +12,7 @@ export class StoryService {
     private readonly imageGenerator: ImageGeneratorUtil,
     @InjectModel(StoryInfo.name)
     private storyModel: Model<StoryInfoDocument>,
-  ) { }
+  ) {}
 
   async createStory(payload: {
     userId: string;
@@ -133,7 +133,7 @@ export class StoryService {
 
   async findAll(page: number, limit: number, search?: string) {
     const skip = (page - 1) * limit;
-    const query: any = {};
+    const query: { title?: { $regex: string; $options: string } } = {};
 
     if (search) {
       query.title = { $regex: search, $options: 'i' };
@@ -159,7 +159,10 @@ export class StoryService {
   }
 
   async getStoriesByUser(userId: string, search?: string) {
-    const query: any = { userId };
+    const query: {
+      userId: string;
+      title?: { $regex: string; $options: string };
+    } = { userId };
 
     if (search) {
       query.title = { $regex: search, $options: 'i' };
