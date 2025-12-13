@@ -23,10 +23,6 @@ Error: Failed to generate image: Model response did not contain image data
 
 1. Sign up at https://replicate.com
 2. Get your API token from https://replicate.com/account/api-tokens
-3. Add to `.env`:
-   ```
-   REPLICATE_API_TOKEN=your_token_here
-   ```
 
 **Cost:** Free tier includes credits, then ~$0.003 per generation
 

@@ -40,7 +40,7 @@ export class VoiceController {
     @UploadedFile() file?: { buffer: Buffer; originalname?: string },
   ) {
     const voiceId = await this.voiceService.cloneVoice(file);
-    if (voiceId) {
+    if (voiceId || storyId) {
       await this.storyService.setVoiceId(storyId, voiceId);
       // Fetch the story and generate audio for all chapters sequentially
       const story = await this.storyService.getStoryById(storyId);
