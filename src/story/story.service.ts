@@ -14,6 +14,72 @@ export class StoryService {
     private storyModel: Model<StoryInfoDocument>,
   ) {}
 
+  // async createStory(payload: {
+  //   userId: string;
+  //   title: string;
+  //   language: string;
+  //   style: string;
+  //   genre: number;
+  //   characters: { name: string }[];
+  //   beginning: string;
+  //   chapterCount?: number;
+  // }) {
+  //   const {
+  //     userId,
+  //     title,
+  //     language,
+  //     style,
+  //     genre,
+  //     characters,
+  //     beginning,
+  //     chapterCount = 4,
+  //   } = payload;
+
+  //   // Step 1: Generate raw story text
+  //   const text = await this.storyUtil.generateStory(
+  //     title,
+  //     language,
+  //     style,
+  //     genre.toString(),
+  //     characters,
+  //     beginning,
+  //     chapterCount,
+  //   );
+
+  //   // Step 2: Split into chapter objects
+  //   const rawChapters = this.storyUtil.splitIntoChapters(text);
+
+  //   // Step 3: Convert chapter objects to your required structure
+  //   const processedChapters = rawChapters.map((ch, index) => ({
+  //     chapter: index + 1,
+  //     title: ch.title,
+  //     text: ch.text,
+  //     audioUrl: null, // you can fill this later after ElevenLabs TTS
+  //   }));
+
+  //   // Step 4: Save to database
+  //   const created = await this.storyModel.create({
+  //     userId,
+  //     title,
+  //     language,
+  //     style,
+  //     genre,
+  //     characters,
+  //     beginning,
+  //     chapterCount,
+  //     generatedStory: processedChapters,
+  //   });
+
+  //   // Step 5: Asynchronously generate images for each chapter
+  //   this.generateChapterImages(created);
+
+  //   return {
+  //     storyText: text,
+  //     chapters: processedChapters,
+  //     saved: created,
+  //   };
+  // }
+
   async createStory(payload: {
     userId: string;
     title: string;
@@ -32,33 +98,36 @@ export class StoryService {
       genre,
       characters,
       beginning,
-      chapterCount = 4,
+      chapterCount = 4, // ✅ default if not provided
     } = payload;
 
-    // Step 1: Generate raw story text
-    const text = await this.storyUtil.generateStory(
+    // Optional safety guard (recommended)
+    const safeChapterCount = Math.max(1, Math.min(chapterCount, 20));
+
+    // 1️⃣ Generate story text with dynamic chapter count
+    const storyText = await this.storyUtil.generateStory(
       title,
       language,
       style,
       genre.toString(),
       characters,
       beginning,
-      chapterCount,
+      safeChapterCount,
     );
 
-    // Step 2: Split into chapter objects
-    const rawChapters = this.storyUtil.splitIntoChapters(text);
+    // 2️⃣ Split generated text into chapters
+    const rawChapters = this.storyUtil.splitIntoChapters(storyText);
 
-    // Step 3: Convert chapter objects to your required structure
+    // 3️⃣ Normalize chapters into DB format
     const processedChapters = rawChapters.map((ch, index) => ({
       chapter: index + 1,
       title: ch.title,
       text: ch.text,
-      audioUrl: null, // you can fill this later after ElevenLabs TTS
+      audioUrl: null,
     }));
 
-    // Step 4: Save to database
-    const created = await this.storyModel.create({
+    // 4️⃣ Persist story
+    const createdStory = await this.storyModel.create({
       userId,
       title,
       language,
@@ -66,17 +135,22 @@ export class StoryService {
       genre,
       characters,
       beginning,
-      chapterCount,
+      chapterCount: processedChapters.length, // ✅ actual count
       generatedStory: processedChapters,
     });
 
-    // Step 5: Asynchronously generate images for each chapter
-    this.generateChapterImages(created);
+    // 5️⃣ Fire-and-forget image generation
+    this.generateChapterImages(createdStory);
 
+    // 6️⃣ Response
     return {
-      storyText: text,
-      chapters: processedChapters,
-      saved: created,
+      success: true,
+      message: 'Story created successfully',
+      data: {
+        storyText,
+        chapters: processedChapters,
+        storyId: createdStory._id,
+      },
     };
   }
 
