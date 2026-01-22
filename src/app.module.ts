@@ -14,6 +14,7 @@ import { ImageGenarateModule } from './image-genarate/image-genarate.module';
 import { StoryModule } from './story/story.module';
 import { VoiceModule } from './voice/voice.module';
 import { StatisticsModule } from './statistics/statistics.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -39,8 +40,9 @@ import { StatisticsModule } from './statistics/statistics.module';
     StoryModule,
     VoiceModule,
     StatisticsModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
+export class AppModule {}
